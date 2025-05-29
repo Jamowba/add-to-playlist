@@ -6,20 +6,20 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const app = express();
-app.use(express.static("public")); // Serve index.html from /public
+app.use(express.static("public")); // Serve the overlay page
 
 const client_id = process.env.CLIENT_ID;
 const client_secret = process.env.CLIENT_SECRET;
 const redirect_uri = process.env.REDIRECT_URI;
 
-// The URL to your publicly shared output.txt file from Google Drive
+// Your public .txt file link from Google Drive
 const songFileURL = "https://drive.google.com/uc?export=download&id=1cxtMNTPF2QFTNVVmSnFkvdvGOKhGm3Nt";
 
 // -------------------------
 // Route: /login
 // -------------------------
 app.get("/login", (req, res) => {
-  const scope = "playlist-modify-public";
+  const scope = "user-library-modify"; // For Liked Songs
   res.redirect(
     "https://accounts.spotify.com/authorize?" +
       querystring.stringify({
@@ -54,7 +54,7 @@ app.get("/callback", (req, res) => {
   request.post(authOptions, (error, response, body) => {
     const access_token = body.access_token;
 
-    // Step 1: Get song info from your txt file
+    // Step 1: Fetch the song from your .txt file
     request(songFileURL, (err, resp, songText) => {
       if (err || resp.statusCode !== 200) {
         return res.send("<h2>❌ Could not fetch song file.</h2>");
@@ -86,33 +86,20 @@ app.get("/callback", (req, res) => {
           return res.send(`<h2>❌ Couldn't find "${artist} - ${title}" on Spotify.</h2>`);
         }
 
-        const track_uri = data.tracks.items[0].uri;
+        const track_id = data.tracks.items[0].id;
 
-        // Step 3: Get the user's default playlist
-        request.get(
-          {
-            url: "https://api.spotify.com/v1/me/playlists",
-            headers: { Authorization: "Bearer " + access_token },
-            json: true,
-          },
-          (err, resp, body) => {
-            if (!body.items || body.items.length === 0) {
-              return res.send("<h2>❌ No playlists found in your account.</h2>");
-            }
+        // Step 3: Add track to viewer's Liked Songs
+        
+        const likeOptions = {
+          url: `https://api.spotify.com/v1/me/tracks?ids=${track_id}`,
+          method: "PUT",
+          headers: { Authorization: "Bearer " + access_token },
+          json: true,
+        };
 
-            const playlist_id = body.items[0].id; // Use first playlist
-
-            const addOptions = {
-              url: `https://api.spotify.com/v1/playlists/${playlist_id}/tracks`,
-              headers: { Authorization: "Bearer " + access_token },
-              json: { uris: [track_uri] },
-            };
-
-            request.post(addOptions, (err, resp, body) => {
-              res.send(`<h2>✅ "${artist} - ${title}" added to your playlist!</h2>`);
-            });
-          }
-        );
+        request.put(likeOptions, (err, resp, body) => {
+          res.send(`<h2>✅ "${artist} - ${title}" added to your Liked Songs!</h2>`);
+        });
       });
     });
   });
