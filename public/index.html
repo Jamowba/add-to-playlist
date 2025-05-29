@@ -1,21 +1,42 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>OBS Test</title>
+  <title>OBS Spotify Button</title>
   <style>
     body {
       background: white;
       font-family: sans-serif;
       font-size: 32px;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
       color: black;
+      margin: 0;
+    }
+
+    button {
+      font-size: 20px;
+      padding: 12px 24px;
+      margin-top: 20px;
+      background-color: #1DB954;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #14833b;
     }
   </style>
 </head>
 <body>
-  ✅ Hello from Glitch! This should be visible in OBS.
+  ✅ Hello from Glitch!<br>
+  <button onclick="window.location.href='/login'">
+    ➕ Add Current Song to My Spotify Liked Songs
+  </button>
 </body>
 </html>
