@@ -18,7 +18,7 @@ const redirect_uri = process.env.REDIRECT_URI;
 // Redirects viewer to Spotify login
 // -------------------------
 app.get("/login", (req, res) => {
-  const scope = "playlist-modify-public";
+  const scope = "playlist-modify-public playlist-read-private";
   res.redirect(
     "https://accounts.spotify.com/authorize?" +
       querystring.stringify({
@@ -32,7 +32,7 @@ app.get("/login", (req, res) => {
 
 // -------------------------
 // Route: /callback
-// Handles Spotify redirect and adds a track
+// Handles Spotify redirect, gets access token, and playlists
 // -------------------------
 app.get("/callback", (req, res) => {
   const code = req.query.code || null;
@@ -54,27 +54,50 @@ app.get("/callback", (req, res) => {
   request.post(authOptions, (error, response, body) => {
     const access_token = body.access_token;
 
-    // 💡 TODO: Replace with dynamic track from Songify if available
-    const track_uri = "spotify:track:4cOdK2wGLETKBW3PvgPWqT"; // Rick Astley
-    const playlist_id = "YOUR_PLAYLIST_ID"; // 🔁 Replace with YOUR Spotify playlist ID
-
-    const options = {
-      url: `https://api.spotify.com/v1/playlists/${playlist_id}/tracks`,
+    // 🔁 Get the viewer's playlists
+    const playlistsOptions = {
+      url: "https://api.spotify.com/v1/me/playlists",
       headers: { Authorization: "Bearer " + access_token },
-      json: { uris: [track_uri] },
+      json: true,
     };
 
-    request.post(options, (err, resp, body) => {
-      res.send(`
-        <h2>✅ Song added to your playlist!</h2>
-        <p>You can now close this window.</p>
-      `);
+    request.get(playlistsOptions, (err, resp, body) => {
+      const playlists = body.items;
+
+      // 🖥️ Display viewer's playlists as links
+      let html = "<h2>Select a playlist to add the song to:</h2><ul>";
+      playlists.forEach((p) => {
+        html += `<li><a href="/add-track?playlist_id=${p.id}&access_token=${access_token}">${p.name}</a></li>`;
+      });
+      html += "</ul>";
+      res.send(html);
     });
   });
 });
 
 // -------------------------
-// Start the server
+// Route: /add-track
+// Adds hardcoded song to selected playlist
+// -------------------------
+app.get("/add-track", (req, res) => {
+  const { playlist_id, access_token } = req.query;
+
+  // 💡 Replace this with Songify song later
+  const track_uri = "spotify:track:4cOdK2wGLETKBW3PvgPWqT"; // Rick Astley
+
+  const options = {
+    url: `https://api.spotify.com/v1/playlists/${playlist_id}/tracks`,
+    headers: { Authorization: "Bearer " + access_token },
+    json: { uris: [track_uri] },
+  };
+
+  request.post(options, (err, resp, body) => {
+    res.send("<h2>✅ Song added to your playlist!</h2><p>You can close this window now.</p>");
+  });
+});
+
+// -------------------------
+// Start server
 // -------------------------
 app.listen(3000, () => {
   console.log("✅ App running on http://localhost:3000");
