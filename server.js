@@ -1,3 +1,5 @@
+// server.js — FINAL with Retry + Fallback
+
 const express = require("express");
 const request = require("request");
 const querystring = require("querystring");
@@ -61,35 +63,20 @@ app.get("/callback", (req, res) => {
       }
 
       // CSV: First row = first song
-      const line = csvData.split("\n")[0].trim();
+      const line = csvData.split("\n")[0].replace(/^"|"$/g, "").trim(); // Strip quotes
       if (!line.includes(" - ")) {
         return res.send("<h2>❌ Invalid song format. Must be 'Artist - Title'</h2>");
       }
 
-      const [artist, title] = line.split(" - ");
+      const [artistRaw, titleRaw] = line.split(" - ");
 
-      // Step 2: Search Spotify for the track
-      const searchQuery = encodeURIComponent(`track:${title} artist:${artist}`);
-      const searchUrl = `https://api.spotify.com/v1/search?q=${searchQuery}&type=track&limit=1`;
+      // Handle multi-artist
+      const artistParts = artistRaw.split(",").map((a) => a.trim());
+      const artistQuery = artistParts.map((a) => `artist:${a}`).join(" ");
 
-      const options = {
-        url: searchUrl,
-        headers: { Authorization: "Bearer " + access_token },
-        json: true,
-      };
+      const title = titleRaw.trim();
 
-      request.get(options, (err, resp, data) => {
-        if (
-          !data.tracks ||
-          !data.tracks.items ||
-          data.tracks.items.length === 0
-        ) {
-          return res.send(`<h2>❌ Couldn't find "${artist} - ${title}" on Spotify.</h2>`);
-        }
-
-        const track_id = data.tracks.items[0].id;
-
-        // Step 3: Add track to viewer's Liked Songs
+      function addTrackToLiked(track_id) {
         const likeOptions = {
           url: `https://api.spotify.com/v1/me/tracks?ids=${track_id}`,
           method: "PUT",
@@ -98,9 +85,67 @@ app.get("/callback", (req, res) => {
         };
 
         request.put(likeOptions, (err, resp, body) => {
-          res.send(`<h2>✅ "${artist} - ${title}" added to your Liked Songs!</h2>`);
+          res.send(`<h2>✅ "${artistParts.join(", ")} - ${title}" added to your Liked Songs!</h2>`);
         });
-      });
+      }
+
+      function searchSpotify(searchUrl, fallback = false) {
+        request.get(
+          {
+            url: searchUrl,
+            headers: { Authorization: "Bearer " + access_token },
+            json: true,
+          },
+          (err, resp, data) => {
+            if (
+              !data.tracks ||
+              !data.tracks.items ||
+              data.tracks.items.length === 0
+            ) {
+              if (!fallback) {
+                // Retry SAME search after short delay
+                console.log("🔄 Retrying search after delay...");
+                return setTimeout(() => searchSpotify(searchUrl, true), 500);
+              } else {
+                // Fallback to loose search (track only)
+                console.log("⚠️ Fallback to loose search...");
+                const looseQuery = encodeURIComponent(`track:${title}`);
+                const looseUrl = `https://api.spotify.com/v1/search?q=${looseQuery}&type=track&limit=1`;
+                request.get(
+                  {
+                    url: looseUrl,
+                    headers: { Authorization: "Bearer " + access_token },
+                    json: true,
+                  },
+                  (err, resp, data) => {
+                    if (
+                      !data.tracks ||
+                      !data.tracks.items ||
+                      data.tracks.items.length === 0
+                    ) {
+                      return res.send(
+                        `<h2>❌ Couldn't find "${artistParts.join(", ")} - ${title}" even after retry and fallback.</h2>`
+                      );
+                    } else {
+                      const track_id = data.tracks.items[0].id;
+                      addTrackToLiked(track_id);
+                    }
+                  }
+                );
+              }
+            } else {
+              const track_id = data.tracks.items[0].id;
+              addTrackToLiked(track_id);
+            }
+          }
+        );
+      }
+
+      // Initial search start
+      const searchQuery = encodeURIComponent(`track:${title} ${artistQuery}`);
+      const searchUrl = `https://api.spotify.com/v1/search?q=${searchQuery}&type=track&limit=1`;
+      console.log("🎵 Starting Spotify search:", searchUrl);
+      searchSpotify(searchUrl);
     });
   });
 });
@@ -113,4 +158,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ App running on http://localhost:${PORT}`);
 });
-
