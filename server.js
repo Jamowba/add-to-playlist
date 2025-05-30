@@ -12,8 +12,8 @@ const client_id = process.env.CLIENT_ID;
 const client_secret = process.env.CLIENT_SECRET;
 const redirect_uri = process.env.REDIRECT_URI;
 
-// Your public .txt file link from Google Drive
-const songFileURL = "https://drive.google.com/uc?export=download&id=1duSgJCl6s5Lcz76zzY0BL9kdbUGAiMJb";
+// Your public Google Sheets CSV link
+const songFileURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT_AlpEmUEy8nEvgwcF1V0Ag3q_w_pQFduW-CQuQBGLHf4io72TP-jE8KDEUWPCSwKvBNj5SfRp2cKn/pub?output=csv";
 
 // -------------------------
 // Route: /login
@@ -54,13 +54,14 @@ app.get("/callback", (req, res) => {
   request.post(authOptions, (error, response, body) => {
     const access_token = body.access_token;
 
-    // Step 1: Fetch the song from your .txt file
-    request(songFileURL, (err, resp, songText) => {
+    // Step 1: Fetch the song from the Google Sheet CSV
+    request(songFileURL, (err, resp, csvData) => {
       if (err || resp.statusCode !== 200) {
-        return res.send("<h2>❌ Could not fetch song file.</h2>");
+        return res.send("<h2>❌ Could not fetch song from Google Sheets.</h2>");
       }
 
-      const line = songText.trim();
+      // CSV: First row = first song
+      const line = csvData.split("\n")[0].trim();
       if (!line.includes(" - ")) {
         return res.send("<h2>❌ Invalid song format. Must be 'Artist - Title'</h2>");
       }
@@ -89,7 +90,6 @@ app.get("/callback", (req, res) => {
         const track_id = data.tracks.items[0].id;
 
         // Step 3: Add track to viewer's Liked Songs
-        
         const likeOptions = {
           url: `https://api.spotify.com/v1/me/tracks?ids=${track_id}`,
           method: "PUT",
