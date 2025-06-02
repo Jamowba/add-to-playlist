@@ -6,37 +6,45 @@
   <title>Song Added!</title>
   <style>
     body {
-      background: url('/images/New Logo (0-00-04-12).png') no-repeat center center fixed;
+      background: url('/images/New-Logo.png') no-repeat center center fixed;
       background-size: cover;
       font-family: sans-serif;
-      font-size: 32px;
+      font-size: 25px;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      color: black;
+      color: rgb(255, 255, 255);
       margin: 0;
       text-shadow: 1px 1px 2px #fff;
     }
 
-    .message {
-      background-color: rgba(255, 255, 255, 0.7);
-      padding: 20px;
+    .confirmation {
+      font-size: 40px;
+      padding: 20px 80px;
+      background-color: #1DB954;
+      color: white;
+      border: none;
       border-radius: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 30px;
+      text-align: center;
     }
 
-    p {
-      font-size: 20px;
-      margin-top: 10px;
+    .message {
+      background-color: rgba(240, 11, 11, 0.7);
+      padding: 7px 14px;
+      border-radius: 4px;
     }
   </style>
 </head>
 <body>
-  <div class="message">
-    ✅ "{{artist}} - {{title}}" added to your Liked Songs! ✅
+  <div class="confirmation">
+    ✅ Song added to Your Spotify Liked Songs! ✅
   </div>
-  <p>You can close this window and continue enjoying the stream 🎵</p>
+
+  <div class="message">
+    ✅ DaddyMac loves that you love his tunes ✅
+  </div>
 </body>
 </html>
