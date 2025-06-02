@@ -1,4 +1,4 @@
-// server.js — FINAL with Retry + Fallback
+// server.js — FINAL with Retry + Fallback + Confirmation Page
 
 const express = require("express");
 const request = require("request");
@@ -9,6 +9,9 @@ dotenv.config();
 
 const app = express();
 app.use(express.static("public")); // Serve the overlay page
+
+app.set("view engine", "ejs");
+app.set("views", __dirname + "/views");
 
 const client_id = process.env.CLIENT_ID;
 const client_secret = process.env.CLIENT_SECRET;
@@ -85,7 +88,7 @@ app.get("/callback", (req, res) => {
         };
 
         request.put(likeOptions, (err, resp, body) => {
-          res.send(`<h2>✅ "${artistParts.join(", ")} - ${title}" added to your Liked Songs!</h2>`);
+          res.render("confirmation", { artist: artistParts.join(", "), title });
         });
       }
 
