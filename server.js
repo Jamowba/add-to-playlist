@@ -124,9 +124,8 @@ app.get("/callback", (req, res) => {
                       !data.tracks.items ||
                       data.tracks.items.length === 0
                     ) {
-                      return res.send(
-                        `<h2>❌ Couldn't find "${artistParts.join(", ")} - ${title}" even after retry and fallback.</h2>`
-                      );
+                      return res.sendFile(__dirname + '/views/error.html');
+
                     } else {
                       const track_id = data.tracks.items[0].id;
                       addTrackToLiked(track_id);
