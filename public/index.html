@@ -18,49 +18,39 @@
       color: black;
       margin: 0;
       text-shadow: 1px 1px 2px #fff;
-      padding: 20px;
-      box-sizing: border-box;
-    }
-
-    .message {
-      background-color: rgba(255, 255, 255, 0.7);
-      padding: 20px 40px;
-      border-radius: 12px;
-      margin-bottom: 40px; /* space below message */
-      font-size: 1.5em;
     }
 
     button {
-      font-size: 28px; /* bigger button text */
-      padding: 20px 50px; /* bigger button padding */
+      font-size: 28px;
+      padding: 20px 80px;
       background-color: #1DB954;
       color: white;
       border: none;
       border-radius: 12px;
       cursor: pointer;
       transition: background 0.3s ease;
-      box-shadow: 0px 4px 8px rgba(0,0,0,0.3); /* subtle button shadow */
-      z-index: 2; /* stays above background but won't cover text below */
+      margin-bottom: 30px; /* spacing below button */
     }
 
     button:hover {
       background-color: #14833b;
     }
 
-    .spacer {
-      flex-grow: 1; /* pushes button up slightly */
+    .message {
+      background-color: rgba(255, 255, 255, 0.7);
+      padding: 20px 40px;
+      border-radius: 12px;
     }
   </style>
 </head>
 <body>
-  <div class="message">
-    ✅ DaddyMac loves that you love his tunes ✅
-  </div>
-
-  <div class="spacer"></div>
-
   <button onclick="window.location.href='/login'">
     ➕ Add Current Song to My Spotify Liked Songs
   </button>
+
+  <div class="message">
+    ✅ DaddyMac loves that you love his tunes ✅
+  </div>
 </body>
 </html>
+
